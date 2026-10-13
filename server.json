@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "studio.zoromi/zoromi",
+  "title": "Zoromi",
+  "description": "Make pictures and video clips with your Zoromi Gems, and follow your books and video projects.",
+  "version": "1.0.0",
+  "websiteUrl": "https://zoromi.studio/developers",
+  "repository": {
+    "url": "https://github.com/zoromi-studio/zoromi-mcp",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://zoromi.studio/api/v1/mcp"
+    }
+  ]
+}
