@@ -14,7 +14,7 @@ from the chat.
 https://zoromi.studio/api/v1/mcp/claude
 ```
 
-Press Connect, sign in to Zoromi, and choose **read only** or **read and make things** with a daily Gems limit.
+Press Connect, sign in to Zoromi, and choose **read only** or **read and make things** with a daily limit.
 
 **ChatGPT** — Settings → Apps & Connectors → Create (Developer mode, under Advanced). Choose OAuth and paste:
 
