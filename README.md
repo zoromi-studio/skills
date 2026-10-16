@@ -53,12 +53,14 @@ The same skill is in [`skills/zoromi`](skills/zoromi) in this repository.
 | `get_zoromi_overview` | What Zoromi makes and how to get started | No |
 | `get_video_prices` | Today's prices for video clips | No |
 | `get_plans_and_pricing` | The plans and what each includes | No |
-| `get_my_account` | Your plan and your Gems | Yes |
+| `get_my_account` | Your plan, your Gems and your API balance | Yes |
+| `list_my_gems_charges` | Your recent Gems charges and refunds | Yes |
 | `list_my_books` / `get_book` | Your illustrated books | Yes |
 | `list_my_video_projects` / `get_video_project` | Your video projects | Yes |
 | `estimate_image_cost` → `create_image` | One picture from your description | Yes, with permission to make things |
 | `estimate_video_clip_cost` → `create_video_clip` | One short video clip, from words or from one of your own pictures | Yes, with permission to make things |
 | `get_generation_status` | Whether it's ready, your link to it, and what it took | Yes |
+| `estimate_website_clips_cost` | What filming some clips on the website would cost in Gems | Yes |
 | `estimate_website_story_video_cost` → `start_website_story_video` → `get_website_story_video_status` | A short-drama project from your script, finished on the website | Yes |
 
 New tools show up in your assistant automatically. The full guide is at
@@ -72,11 +74,12 @@ New tools show up in your assistant automatically. The full guide is at
 - "Is my Zoromi video project ready?"
 - "Open my book called The Lighthouse Twins."
 
-## Gems and prices
+## Prices
 
-Pictures and clips you make through an assistant use the Gems on your Zoromi account, at the same price as on the
-website. Your assistant reads the live price, tells you, and goes ahead after your yes. Each key or connection has its
-own daily Gems limit, which you set on your account page.
+Pictures and clips you make through an assistant are paid in US dollars from your API balance, which is separate from
+the Gems you use on the website. Your assistant reads the live price, tells you, and goes ahead after your yes. If a
+picture or clip can't be made, its charge goes back to your API balance. Each key or connection has its own daily
+limit, which you set on your account page. Books and whole short dramas are made on the website, with Gems.
 
 ![From a character card to the scene](images/02b-card-to-scene-alt-clip07.png)
 

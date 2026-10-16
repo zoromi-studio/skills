@@ -31,22 +31,8 @@ No key, no arguments.
 - `service`, `what_zoromi_does` (list of sentences), `how_to_start` (list of sentences)
 - `links`: `website`, `sign_up`, `pricing`, `account`, `instructions_for_ai`
 - `tools`: each tool's `name`, `needs_api_key`, `summary`
-- `spends_gems`: whether making pictures and clips is open to this connection - they are paid with
-  the Gems on the user's Zoromi account; `spends_api_balance`: `false`
-
-## get_api_prices
-
-No key needed, no arguments. What making costs, in Gems from the user's Zoromi account - the same as on the
-website, read live.
-
-- `unit`: Gems, the same as on the website
-- `clips`: one per model and resolution
-  - `model`, `resolution`
-  - `gems_per_5_second_clip`: a 5-second clip's price; a longer clip costs more
-- `pictures`: one per picture model
-  - `model`, `gems_per_picture`
-- `how_priced`, `note`
-- `guide`: link to the developer guide
+- `spends_gems`: always `false` - pictures and clips made here are paid from the API balance in US
+  dollars; `spends_api_balance` says whether making them is open to this connection
 
 ## get_video_prices
 
@@ -82,10 +68,15 @@ Key needed, no arguments.
 - `account_id`, `plan`, `gems` (balance)
 - `daily_gems_cap`, `daily_gems_spent_today`, `daily_gems_remaining_today`: the cap the
   account owner set for themselves; empty when they set none
-- `plan_status`: the plan's status in the account page's words (for example `Plan active`)
-- `api_key`: `name`, `key_prefix`, `scopes`, `daily_limit_gems` (what the key or connection may spend a day, in
-  Gems) of the key used for this call (never the key itself)
-- What each job took is listed by `list_my_gems_charges`.
+- `api_key`: `name`, `key_prefix`, `scopes`, `daily_limit_usd_cents` (what the key may spend a day
+  from the API balance, in US cents) of the key used for this call (never the key itself)
+- `api_balance` (dollars and cents, as text), `api_balance_cents`: the API balance, in US dollars, separate from
+  Gems; pictures and clips made here are paid from it
+- `recent_api_entries`: its newest entries, each `what` (added, charged, held until the job ends, given
+  back, refunded), `amount` and `at`. Use it when the user asks what they have or what something took.
+  Both are left out when the balance cannot be read just now.
+- `api_balance_on_hold`, `api_balance_on_hold_note`: present only while a payment dispute is open: that
+  much is on hold, and nothing can be made through the API until the dispute ends
 - `account_page`: link for the user
 
 ## list_my_books
@@ -135,9 +126,10 @@ Key needed. Argument: `task_id`, a job id the website or an earlier answer gave.
 - `view_url`: when done, the account owner's own page for it on Zoromi (signed in), with a
   download button. When `result_url` is empty, give the user `view_url` - `result_note` says so
 - `error`: present when it failed, in words for the user
-- `charge`: for a picture or clip made with `create_image`, `create_video_clip` or an edit, what
-  it took - `pays_with` (`gems`), `charged` (as text), `charged_gems`, `state` (`held` until the job
-  ends, `charged`, or `reversed` when it failed and the Gems went back) and `note`
+- `charge`: for a picture or clip made with `create_image` or `create_video_clip`, what it
+  cost from the API balance - `charged` (in dollars and cents, as text), `charged_cents`, `state`
+  (`held` until the job ends, `charged`, or `reversed` when it failed and the money went back)
+  and `note`
 
 When checking a running job again, wait at least 10 seconds between calls; a video clip
 usually takes minutes. If the answer has `known: false`, or the job stays `PENDING` far longer
@@ -189,8 +181,8 @@ missing arguments are a JSON-RPC `-32602` error.
 
 ## estimate_image_cost
 
-Needs a key the account owner allowed to spend. Spends nothing. Pictures and clips made here are
-paid with the Gems on the user's Zoromi account, at the website's price.
+Needs a key the account owner allowed to spend. Spends nothing. Pictures and clips made through
+the API are paid in US dollars from the account's API balance, never in Gems.
 
 Arguments:
 
@@ -204,13 +196,14 @@ One picture, made from the words alone.
 Answer:
 
 - `quote_id`: used once, by this key, for exactly these arguments; `expires_at`
-- `price` (as text) and `gems`: the price, the same as on the website; `paid_from`
+- `price` (in dollars and cents, as text) and `cents`: the price of the picture, rounded up to the
+  cent; `paid_from`
 - `model`, `aspect_ratio`, `quality`, `pictures: 1`
-- `gems_balance`, `enough_gems`, `left_today_for_this_connection`, `within_daily_limit`; absent when
-  they could not be read. When the account's Gems or the key's daily Gems limit do not cover it, `next`
-  says so
-- `needs_approval_on_website` and `approve_url` only when the account owner's settings make a job this
-  large wait for their approval on the website
+- `api_balance`, `enough_balance`, `left_today_for_this_key`, `within_daily_limit`; absent when
+  they could not be read. When the balance or the key's limit does not cover it, `next` says so
+  and `account_page` is the link for the user
+- `needs_approval_on_website`; when `true`, `approve_url`: the account owner approves the job
+  on the website before it can run
 - `next`, `pricing_page`, `charged: false`
 
 Refusals inside the answer: `content_not_allowed` (the content policy does not allow the
@@ -220,23 +213,23 @@ request; nothing was charged), `content_check_unavailable` (try again shortly), 
 
 ## create_image
 
-Needs a key allowed to spend. **Takes the quoted price from the account's Gems.**
+Needs a key allowed to spend. **Charges the quoted price to the API balance.**
 
 Arguments: exactly the arguments of the quote, plus `quote_id` and `confirmed_by_user`
 (`true` only after the user said yes to the price).
 
 The server checks the request against the content policy and prices the picture again; if
 anything differs from the quote, it refuses and charges nothing. It also counts the picture
-against the key's daily Gems limit.
+against the key's daily limit.
 
 Answer: `task_id` (check it with `get_generation_status`, which then says what was charged), `price`,
-`gems`, `paid_from`, `status: queued`, `next`, `if_it_fails`, `usage_page`. When the picture
-finally fails, the Gems it took go back to the account.
+`cents`, `paid_from`, `status: queued`, `next`, `if_it_fails`, `usage_page`. When the picture
+finally fails, what it was charged goes back to the API balance.
 
 ## estimate_image_edit_cost
 
-Needs a key the account owner allowed to spend. Spends nothing. Pictures made or edited here are
-paid with the Gems on the user's Zoromi account, at the website's price.
+Needs a key the account owner allowed to spend. Spends nothing. Pictures made or edited through
+the API are paid in US dollars from the account's API balance, never in Gems.
 
 Arguments:
 
@@ -256,13 +249,14 @@ Arguments:
 Answer:
 
 - `quote_id`: used once, by this key, for exactly these arguments; `expires_at`
-- `price` (as text) and `gems`: the price, the same as on the website; `paid_from`
+- `price` (in dollars and cents, as text) and `cents`: the price of the edit, rounded up to the
+  cent; `paid_from`
 - `model`, `aspect_ratio`, `quality`, `pictures_in`, `pictures: 1`
-- `gems_balance`, `enough_gems`, `left_today_for_this_connection`, `within_daily_limit`; absent when
-  they could not be read. When the account's Gems or the key's daily Gems limit do not cover it, `next`
-  says so
-- `needs_approval_on_website` and `approve_url` only when the account owner's settings make a job this
-  large wait for their approval on the website
+- `api_balance`, `enough_balance`, `left_today_for_this_key`, `within_daily_limit`; absent when
+  they could not be read. When the balance or the key's limit does not cover it, `next` says so
+  and `account_page` is the link for the user
+- `needs_approval_on_website`; when `true`, `approve_url`: the account owner approves the job
+  on the website before it can run
 - `next`, `pricing_page`, `charged: false`
 
 Refusals inside the answer: `consent_needed`, `not_found` (not one of this account's pictures),
@@ -274,7 +268,7 @@ Refusals inside the answer: `consent_needed`, `not_found` (not one of this accou
 
 ## edit_image
 
-Needs a key allowed to spend. **Takes the quoted price from the account's Gems.**
+Needs a key allowed to spend. **Charges the quoted price to the API balance.**
 
 Arguments: exactly the arguments of the quote, plus `quote_id` and `confirmed_by_user`
 (`true` only after the user said yes to the price).
@@ -282,11 +276,11 @@ Arguments: exactly the arguments of the quote, plus `quote_id` and `confirmed_by
 The server checks the request against the content policy, checks again that every picture is
 still the user's own, keeps the user's word on the pictures with this job, and prices the edit
 again; if anything differs from the quote, it refuses and charges nothing. It also counts the
-edit against the key's daily Gems limit.
+edit against the key's daily limit.
 
 Answer: `task_id` (check it with `get_generation_status`, which then gives `view_url` and says what
-was charged), `price`, `gems`, `paid_from`, `status: queued`, `next`, `if_it_fails`,
-`usage_page`. When the edit finally fails, the Gems it took go back to the account.
+was charged), `price`, `cents`, `paid_from`, `status: queued`, `next`, `if_it_fails`,
+`usage_page`. When the edit finally fails, what it was charged goes back to the API balance.
 
 ## estimate_video_clip_cost
 
@@ -309,13 +303,16 @@ Arguments:
 Answer:
 
 - `quote_id`: used once, by this key, for exactly these arguments; `expires_at`
-- `price` (as text) and `gems`: the price, the same as on the website; `paid_from`
+- `price` (in dollars and cents, as text) and `cents`: the price of the clip, rounded up to the
+  cent; `paid_from`
 - `model`, `resolution`, `aspect_ratio`, `seconds`, `with_sound`, `first_frame`; `seconds_note`
   when the model rounds the length
 - `other_resolutions`, when the resolution was left out: each other resolution sold through the
   API with its `price`
-- `gems_balance`, `enough_gems`, `left_today_for_this_connection`, `within_daily_limit`, and
-  `approve_url` when there is one, as for a picture
+- `api_balance`, `enough_balance`, `left_today_for_this_key`, `within_daily_limit`, as for a
+  picture
+- `needs_approval_on_website`; when `true`, `approve_url`: the account owner approves the job
+  on the website before it can run
 - `next`, `pricing_page`, `charged: false`
 
 Refusals inside the answer also include `content_not_allowed` (the content policy does not
@@ -325,18 +322,18 @@ allow the request; nothing was charged), `content_check_unavailable` (try again 
 
 ## create_video_clip
 
-Needs a key allowed to spend. **Takes the quoted price from the account's Gems.**
+Needs a key allowed to spend. **Charges the quoted price to the API balance.**
 
 Arguments: exactly the arguments of the quote, plus `quote_id` and `confirmed_by_user`
 (`true` only after the user said yes to the price).
 
 The server checks the picture to start from again and prices the clip again; if anything
 differs from the quote, it refuses and charges nothing. It also counts the clip against the
-key's daily Gems limit.
+key's daily limit.
 
 Answer: `task_id` (check it with `get_generation_status`, which then says what was charged), `price`,
-`gems`, `paid_from`, `status: queued`, `next`, `if_it_fails`, `usage_page`. When the clip
-finally fails, the Gems it took go back to the account.
+`cents`, `paid_from`, `status: queued`, `next`, `if_it_fails`, `usage_page`. When the clip
+finally fails, what it was charged goes back to the API balance.
 
 ## estimate_website_story_video_cost
 
@@ -380,27 +377,27 @@ next, in words to pass on), `open_url`, and `next_episode_url` once the film is 
 | `error` | Meaning |
 |---|---|
 | `api_key_required` | The tool needs a key and none was sent |
-| `api_keys_not_open` | Keys are unavailable on the server right now |
+| `api_keys_not_open` | Keys are not open on the server yet |
 | `not_found` | No such id in this account |
 | `forbidden` | This account may not read that |
 | `tool_failed` | A temporary problem; try once more after a few seconds |
 | `tool_not_open` | This tool is switched off right now |
 | `unsupported_resolution`, `cannot_price` | See estimate_website_clips_cost |
-| `spending_not_allowed` | The key or connection may only read; the account owner creates a key that may make things, or connects the assistant again and picks a daily limit |
-| `spending_not_open` | Making pictures and clips is unavailable to this caller |
+| `spending_not_allowed` | The key may not make pictures or clips; the account owner allows it on the account page |
+| `spending_not_open` | Making pictures and clips through the API is not open yet |
 | `not_offered` | That model, resolution or quality is not sold through the API |
 | `consent_needed` | A picture to start from or to edit needs `people_consent` and `rights_confirmed`, both `true`, after the user's yes |
 | `address_not_accepted` | Only a picture's id or its address on Zoromi is accepted; other web addresses are not fetched |
 | `pictures_missing`, `too_many_pictures` | An edit names 1 to 4 of the user's own pictures |
-| `edit_not_open` | Editing pictures is unavailable right now |
-| `first_frame_not_open` | Starting a clip from a picture is unavailable right now |
+| `edit_not_open` | Editing pictures through the API is not open yet |
+| `first_frame_not_open` | A clip cannot start from a picture through the API yet |
 | `consent_not_stored` | The user's word could not be kept; nothing was started or charged; try again shortly |
 | `not_confirmed` | `confirmed_by_user` was not `true` |
 | `quote_not_found`, `quote_other_key`, `quote_other_job`, `quote_used`, `quote_expired`, `quote_declined`, `price_changed` | The quote cannot be used; quote again and ask the user again |
 | `approval_needed` | The owner approves it on the website first; `details.approve_url` |
-| `daily_gems_limit` | The key's daily Gems limit would be passed; nothing was taken |
-| `not_enough_gems` | The account's Gems do not cover it; nothing was taken |
-| `gems_not_open` | This key or connection has no daily Gems limit; the account owner picks one on the account page |
+| `daily_limit` | The key's daily limit would be passed |
+| `not_enough_balance` | The API balance does not cover it; nothing was charged |
+| `balance_on_hold` | The API balance is on hold while a payment dispute is open; nothing was charged |
 | `already_started` | That quote's job was started before; nothing more was charged - check the job before making it again |
 | `not_started` | It did not start; nothing was charged, or what was charged already went back |
 | `start_unknown` | It is not known whether it started; check usage and projects before anything else |
@@ -417,8 +414,8 @@ The body is `{"code": "...", "message": "..."}`.
 | 401 | `invalid_api_key`, `api_key_revoked`, `api_key_expired` | The key does not work; the owner makes a new one on the account page |
 | 401 | `account_unavailable` | The account behind the key cannot use the API |
 | 403 | `origin_refused` | The request came from a browser page that may not call the API |
-| 404 | `mcp_off` | The API is unavailable right now |
+| 404 | `mcp_off` | The API is not open right now |
 | 404 | `unknown_platform` | The address is wrong; use the endpoint above |
 | 413 | `body_too_large` | The request is too big |
 | 429 | `rate_limited` | Too many calls; wait the seconds in `Retry-After` |
-| 503 | `api_keys_not_open` | Keys are unavailable on the server right now |
+| 503 | `api_keys_not_open` | Keys are not open on the server yet |
