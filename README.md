@@ -54,7 +54,7 @@ The same skill is in [`skills/zoromi`](skills/zoromi) in this repository.
 | `get_video_prices` | Today's prices for video clips | No |
 | `get_plans_and_pricing` | The plans and what each includes | No |
 | `get_my_account` | Your plan, your Gems and your API balance | Yes |
-| `list_my_gems_charges` | Your recent Gems charges and refunds | Yes |
+| `list_my_gems_charges` | Your recent Gems charges and refunds, and the totals for the days you ask | Yes |
 | `list_my_books` / `get_book` | Your illustrated books | Yes |
 | `list_my_video_projects` / `get_video_project` | Your video projects | Yes |
 | `estimate_image_cost` → `create_image` | One picture from your description | Yes, with permission to make things |

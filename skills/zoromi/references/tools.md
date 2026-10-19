@@ -138,8 +138,13 @@ than such a job takes, the id is probably wrong: check it against the website or
 
 ## list_my_gems_charges
 
-Key needed. Argument, optional: `limit` (1-200, default 50).
+Key needed. Arguments, optional: `days` (1-90, default 30; 7 for "this week") and `limit` (1-200,
+default 50).
 
+- `summary`: the totals of those days from the account's charge records - `days`, `from`, `until`,
+  `charged_gems`, `refunded_gems`, `net_gems`, `charges`. Give these numbers for any total; never add
+  the entries up yourself. When they cannot be read, `summary_note` says so instead
+- `days`
 - `entries`: newest first, each with `id`, `created_at`, `kind`, `amount`, `charge_type`,
   `status`, and when known `title`, `description`, `book_id`, `project_id`, and `has_result`
   (it made something, seen on the usage page)
@@ -237,10 +242,6 @@ Arguments:
   on Zoromi (the address `get_generation_status` gives for a picture made here works). The first
   is the one edited; the others are references. Other web addresses are not accepted
 - `prompt` (required): what to change, and what to keep, up to 4000 characters
-- `people_consent` (required): `true` only after the user said yes to "Everyone shown in this
-  picture agreed to it being used."
-- `rights_confirmed` (required): `true` only after the user said yes to "I have the right to use
-  this picture."
 - `model`: optional; leave it out for the usual one (the tool lists the names it takes)
 - `aspect_ratio`: `1:1` (default), `16:9`, `9:16`, `4:3`, `3:4`; give the original's shape to
   keep it
@@ -259,7 +260,7 @@ Answer:
   on the website before it can run
 - `next`, `pricing_page`, `charged: false`
 
-Refusals inside the answer: `consent_needed`, `not_found` (not one of this account's pictures),
+Refusals inside the answer: `not_found` (not one of this account's pictures),
 `address_not_accepted` (not an address on Zoromi), `too_many_pictures`, `pictures_missing`,
 `content_not_allowed` (the content policy does not allow the request; nothing was charged),
 `content_check_unavailable` (try again shortly), `unknown_model`, `unsupported_aspect_ratio`,
@@ -296,9 +297,6 @@ Arguments:
 - `with_sound`: default `true`
 - `first_frame`: optional, one of the user's own pictures on Zoromi the clip starts from - its id,
   or its address on Zoromi. Other web addresses are not accepted
-- `people_consent`, `rights_confirmed`: with `first_frame`, both `true`, and only after the user
-  said yes to "Everyone shown in this picture agreed to it being used." and "I have the right to use
-  this picture." The run keeps their word with the job
 
 Answer:
 
@@ -317,7 +315,7 @@ Answer:
 
 Refusals inside the answer also include `content_not_allowed` (the content policy does not
 allow the request; nothing was charged), `content_check_unavailable` (try again shortly),
-`not_offered` (that model and resolution is not sold through the API), `consent_needed`, and
+`not_offered` (that model and resolution is not sold through the API), and
 `not_found` (the picture is not one of this account's).
 
 ## create_video_clip
@@ -386,12 +384,10 @@ next, in words to pass on), `open_url`, and `next_episode_url` once the film is 
 | `spending_not_allowed` | The key may not make pictures or clips; the account owner allows it on the account page |
 | `spending_not_open` | Making pictures and clips through the API is not open yet |
 | `not_offered` | That model, resolution or quality is not sold through the API |
-| `consent_needed` | A picture to start from or to edit needs `people_consent` and `rights_confirmed`, both `true`, after the user's yes |
 | `address_not_accepted` | Only a picture's id or its address on Zoromi is accepted; other web addresses are not fetched |
 | `pictures_missing`, `too_many_pictures` | An edit names 1 to 4 of the user's own pictures |
 | `edit_not_open` | Editing pictures through the API is not open yet |
 | `first_frame_not_open` | A clip cannot start from a picture through the API yet |
-| `consent_not_stored` | The user's word could not be kept; nothing was started or charged; try again shortly |
 | `not_confirmed` | `confirmed_by_user` was not `true` |
 | `quote_not_found`, `quote_other_key`, `quote_other_job`, `quote_used`, `quote_expired`, `quote_declined`, `price_changed` | The quote cannot be used; quote again and ask the user again |
 | `approval_needed` | The owner approves it on the website first; `details.approve_url` |
