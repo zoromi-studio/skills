@@ -22,7 +22,7 @@ The server opens its tools in stages. Before you offer anything, call `tools/lis
 
 While `tools/list` shows only the three open tools:
 
-- Do not ask the user for an API key and do not send them to create one. Members cannot make a key yet.
+- Do not ask the user for an API key just to try: while only these three tools are listed, a key changes nothing.
 - If the user asks about their own account, or wants a picture, a video or a drama made from here, say plainly that this is not
   open from an assistant yet, and give them the website link from `get_zoromi_overview`: they can do it there today.
 - Answer price and plan questions as usual.
@@ -69,8 +69,9 @@ Skip this section while account tools are not open (see [What is open](#what-is-
 
 Prices, plans and `get_zoromi_overview` need no key. Everything about an account needs that
 account owner's key, which starts with `zk_live_`. The owner makes it on their Zoromi account
-page (`get_zoromi_overview` returns the link). If the user has no key yet, answer what you can
-without one and tell them where to make it.
+page (`get_zoromi_overview` returns the link); keys come with some plans, and the page says so
+if theirs does not include them yet. If the user has no key yet, answer what you can without
+one and tell them where to make it.
 
 The user sets it once, outside the project:
 
